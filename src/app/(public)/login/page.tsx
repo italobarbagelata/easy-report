@@ -23,12 +23,14 @@ export function LoginForm() {
 
   useEffect(() => {
     const checkAuthState = async () => {
-      const session = supabase.auth.getSession();
-
-      if (await session) {
-        router.push('/dashboard');
-      } else {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
         router.push('/login');
+        return;
+      } else {
+        router.push('/dashboard');
       }
     };
 
