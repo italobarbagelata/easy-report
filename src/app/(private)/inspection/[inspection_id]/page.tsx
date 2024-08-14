@@ -56,7 +56,7 @@ const DashboardPage = ({ params }: Props) => {
   const inspection_id = params.inspection_id;
   const dispatch: AppDispatch = useDispatch();
 
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [exportersKingo, setExportersKingo] = useState<InspectionElement[]>([]);
   const [labelKingo, setLabelKingo] = useState<InspectionElement[]>([]);
   const [phytoChinaKingo, setPhytoChinaKingo] = useState<InspectionElement[]>(
@@ -364,7 +364,7 @@ const DashboardPage = ({ params }: Props) => {
     doc.text("Inspection Quality Report", 75, 10);
     doc.setFontSize(12);
     //Report date 2024-06-12 Inspected By Juan Pablo Carrasco
-    doc.text("Report date: " + date.toLocaleDateString(), 75, 20);
+    doc.text("Report date: " + date?.toLocaleDateString(), 75, 20);
     doc.text("Inspected By: " + "italo", 125, 20);
 
     doc.setFontSize(16);

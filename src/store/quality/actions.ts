@@ -31,7 +31,7 @@ export const updateQualityCommentsById = (
         }
         dispatch(fetchQualityCommentsSuccess(data));
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
@@ -61,7 +61,7 @@ export const insertQualityComments = (id: Number, qualityComments: QualityCommen
       console.log(data);
       dispatch(fetchQualityCommentsSuccess(data));
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
@@ -94,12 +94,12 @@ export const fetchQualityCommentsById = (id: number) => {
       console.log(data);
       dispatch(fetchQualityCommentsSuccess(data));
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
 
-export const saveQualityComments = (id: Number, qualityComments: QualityComments[]) => {
+export const saveQualityComments = (id: string, qualityComments: QualityComments[]) => {
   console.log(id);
   return async (dispatch: Dispatch) => {
     try {
@@ -153,7 +153,7 @@ export const saveQualityComments = (id: Number, qualityComments: QualityComments
         }
       }
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
@@ -172,7 +172,7 @@ export const addNewQualityCommentStore = (qualityComments: QualityComments) => {
 
       dispatch(fetchQualityCommentsSuccess(updatedState));
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
@@ -190,16 +190,16 @@ export const deleteQualityComment = (id: number) => {
       }
       dispatch(deleteQualityCommentsStore(id));
     } catch (error) {
-      dispatch(fetchQualityCommentsFailure(error.message));
+      dispatch(fetchQualityCommentsFailure(error));
     }
   };
 };
 
 export const fetchQualityCommentsSuccess = (
-  qualityComments: QualityComments[]
+  qualityComments: QualityComments[] | null
 ) => ({
   type: "FETCH_QUALITY_COMMENTS_SUCCESS",
-  payload: qualityComments,
+  payload: qualityComments || [],
 });
 
 export const setQualityCommentsStore = (qualityComments: QualityComments) => ({
@@ -212,7 +212,7 @@ export const deleteQualityCommentsStore = (id: number) => ({
   payload: id,
 });
 
-export const fetchQualityCommentsFailure = (error: string) => ({
+export const fetchQualityCommentsFailure = (error: any) => ({
   type: "FETCH_QUALITY_COMMENTS_FAILURE",
   payload: error,
 });

@@ -59,7 +59,7 @@ export default function UploadFile() {
   )
 }
 
-function CloudUploadIcon(props) {
+function CloudUploadIcon(props: any) {
   return (
     <svg
       {...props}
@@ -81,7 +81,7 @@ function CloudUploadIcon(props) {
 }
 
 
-function XIcon(props) {
+function XIcon(props: any) {
   return (
     <svg
       {...props}

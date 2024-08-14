@@ -8,10 +8,15 @@ export const fetchUsers = () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { id, aud, role, email } = user; 
-      dispatch(fetchUsersSuccess({ id, aud, role, email }));
+
+      if (user) {
+        const { id, aud, role, email } = user;
+        dispatch(fetchUsersSuccess({ id, aud, role, email }));
+      } else {
+        throw new Error("User is null");
+      }
     } catch (error) {
-      dispatch(fetchUsersFailure(error.message));
+      dispatch(fetchUsersFailure(error));
     }
   };
 };
@@ -21,7 +26,7 @@ export const fetchUsersSuccess = (users: User) => ({
   payload: users,
 });
 
-export const fetchUsersFailure = (message: string) => ({
+export const fetchUsersFailure = (message: any) => ({
   type: 'FETCH_USERS_FAILURE',
   payload: message,
 });

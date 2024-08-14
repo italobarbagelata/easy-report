@@ -44,14 +44,59 @@ export const fetchInspections = () => {
       if (error) {
         throw error;
       }
-      dispatch(fetchInspectionsSuccess(data));
+      const inspections = data.map((item: any) => ({
+        id: item.id,
+        observations: item.observations,
+        status_email: item.status_email,
+        place: item.place,
+        grower: item.grower,
+        final_recomendations: item.final_recomendations,
+        extra_details: item.extra_details,
+        color: item.color.map((color: any) => ({
+          id: color.id,
+          description: color.description,
+        })),
+        dispatch: item.dispatch.map((dispatch: any) => ({
+          id: dispatch.id,
+          description: dispatch.description,
+        })),
+        exporter: item.exporter.map((exporter: any) => ({
+          id: exporter.id,
+          description: exporter.description,
+        })),
+        label: item.label.map((label: any) => ({
+          id: label.id,
+          description: label.description,
+        })),
+        package: item.package.map((package_kingo: any) => ({
+          id: package_kingo.id,
+          description: package_kingo.description,
+        })),
+        phyto_china: item.phyto_china.map((phyto_china: any) => ({
+          id: phyto_china.id,
+          description: phyto_china.description,
+        })),
+        sizes: item.sizes.map((sizes: any) => ({
+          id: sizes.id,
+          description: sizes.description,
+        })),
+        weight: item.weight.map((weight: any) => ({
+          id: weight.id,
+          description: weight.description,
+        })),
+        final_overall: item.final_overall.map((final_overall: any) => ({
+          id: final_overall.id,
+          description: final_overall.description,
+        })),
+      }));
+      dispatch(fetchInspectionsSuccess(inspections));
     } catch (error) {
-      dispatch(fetchInspectionsFailure(error.message));
+      dispatch(fetchInspectionsFailure(error));
     }
   };
 };
 
-export const createInspection = (id: Number) => {
+export const createInspection = (id: string) => {
   return async (dispatch: Dispatch) => {
     try {
       const { data, error } = await supabase.from("inspection").insert([
@@ -66,7 +111,7 @@ export const createInspection = (id: Number) => {
       }
       return data.id;
     } catch (error) {
-      dispatch(fetchInspectionsFailure(error.message));
+      dispatch(fetchInspectionsFailure(error));
       throw error;
     }
   };
@@ -145,9 +190,9 @@ export const updateInspection = (id: Number, inspection: Inspection) => {
         throw error;
       }
       console.log(data);
-      dispatch(updateInspectionSuccess(data));
+      dispatch(updateInspectionSuccess(data as Inspection));
     } catch (error) {
-      dispatch(fetchInspectionsFailure(error.message));
+      dispatch(fetchInspectionsFailure(error));
     }
   };
 };
@@ -219,12 +264,12 @@ export const fetchInspection = (id: Number) => {
       console.log(data);
       dispatch(fetchInspectionSuccess(data[0]));
     } catch (error) {
-      dispatch(fetchInspectionsFailure(error.message));
+      dispatch(fetchInspectionsFailure(error));
     }
   };
 };
 
-export const fetchInspectionSuccess = (inspection: Inspection) => {
+export const fetchInspectionSuccess = (inspection: any) => {
   return {
     type: "FETCH_INSPECTION_SUCCESS",
     payload: inspection,
@@ -238,7 +283,7 @@ export const fetchInspectionsSuccess = (inspections: Inspection[]) => {
   };
 };
 
-export const fetchInspectionsFailure = (error) => {
+export const fetchInspectionsFailure = (error: any) => {
   return {
     type: "FETCH_INSPECTIONS_FAILURE",
     payload: error,
