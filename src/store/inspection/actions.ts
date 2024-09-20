@@ -1,29 +1,8 @@
+import { Inspection, InspectionElement } from "@/interfaces/inspection";
 import { supabase } from "@/supabase/client";
 import { Dispatch } from "redux";
 
-interface Inspection {
-  id: number;
-  observations?: string;
-  status_email?: string;
-  place: string;
-  grower: string;
-  final_recomendations: string;
-  extra_details: string;
-  color: NestedItem;
-  dispatch: NestedItem;
-  exporter: NestedItem;
-  label: NestedItem;
-  package: NestedItem;
-  phyto_china: NestedItem;
-  sizes?: NestedItem;
-  weight: NestedItem;
-  final_overall: NestedItem;
-}
 
-interface NestedItem {
-  id: number;
-  description: string;
-}
 
 export const fetchInspections = (userId: string) => {
   return async (dispatch: Dispatch) => {
@@ -55,7 +34,7 @@ export const fetchInspections = (userId: string) => {
         throw error;
       }
       
-      const mapNestedItem = (item: any): NestedItem => ({
+      const mapNestedItem = (item: any): InspectionElement => ({
         id: item?.id,
         description: item?.description,
       });
@@ -187,7 +166,7 @@ export const updateInspection = (id: Number, inspection: Inspection) => {
         throw error;
       }
       console.log(data);
-      dispatch(updateInspectionSuccess(data[0]));
+      dispatch(updateInspectionSuccess(inspection));
     } catch (error) {
       dispatch(fetchInspectionsFailure(error));
     }

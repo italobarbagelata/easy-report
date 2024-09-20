@@ -26,10 +26,12 @@ const Bar7Days = ({ inspections }: Bar7DaysProps) => {
 
   const completeInspectionCounts = inspectionDates.map((date) => {
     const count = filteredInspections.filter(
-      (ins) => new Date(ins.date).toISOString().split("T")[0] === date
+      (ins) =>
+        ins.date && new Date(ins.date).toISOString().split("T")[0] === date // Check if ins.date is defined
     ).length; // Contar todas las inspecciones para esa fecha
     return count; // Retornar el conteo
   });
+
   const option = {
     xAxis: {
       type: "category",
@@ -39,12 +41,12 @@ const Bar7Days = ({ inspections }: Bar7DaysProps) => {
       type: "value",
     },
     legend: {
-        bottom: "5%",
-        left: "center",
-        textStyle: {
-          color: "white",
-        },
+      bottom: "5%",
+      left: "center",
+      textStyle: {
+        color: "white",
       },
+    },
     series: [
       {
         data: completeInspectionCounts, // Asegúrate de que esto tenga la misma longitud

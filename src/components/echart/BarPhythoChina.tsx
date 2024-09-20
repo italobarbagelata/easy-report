@@ -6,13 +6,17 @@ interface Bar7DaysProps {
 }
 
 const BarPhythoChina = ({ inspections }: Bar7DaysProps) => {
-  const countryData = inspections.reduce((acc, inspection) => {
-    const country = inspection.phyto_china?.description; // Usar la descripción del país
-    if (country) {
-      acc[country] = (acc[country] || 0) + 1; // Contar inspecciones por país
-    }
-    return acc;
-  }, {});
+  const countryData = inspections.reduce(
+    (acc: Record<string, number>, inspection) => {
+      // Explicitly type acc
+      const country = inspection.phyto_china?.description; // Usar la descripción del país
+      if (country) {
+        acc[country] = (acc[country] || 0) + 1; // Contar inspecciones por país
+      }
+      return acc;
+    },
+    {}
+  );
 
   const countries = Object.keys(countryData);
   const inspectionCounts = Object.values(countryData); // Cambiar a conteo de inspecciones

@@ -201,19 +201,14 @@ export default function PhotoGallery({ inspection_id, disabled }: Props) {
       const currentOrder = prev[photo];
       const newOrder = currentOrder ? undefined : orderCounter;
 
-      if (newOrder) {
-        setOrderCounter(orderCounter + 1);
-      } else {
-        setOrderCounter(orderCounter - 1);
-      }
+      // Ensure newOrder is always a number
+      const finalOrder = newOrder ?? 0; // Default to 0 if newOrder is undefined
 
-      dispatch(
-        updatePhotoOrder({ url: photo, order: newOrder ?? 0 }, newOrder ?? 0)
-      );
+      dispatch(updatePhotoOrder({ url: photo, order: finalOrder }, finalOrder));
 
       return {
         ...prev,
-        [photo]: newOrder,
+        [photo]: finalOrder, // Use finalOrder here
       };
     });
   }
@@ -311,7 +306,9 @@ export default function PhotoGallery({ inspection_id, disabled }: Props) {
           <div></div>
         </DialogTrigger>
         <DialogContent>
-          <img src={selectedPhoto} alt="Selected" style={{ width: "100%" }} />
+          {selectedPhoto && (
+            <img src={selectedPhoto} alt="Selected" style={{ width: "100%" }} />
+          )}
           <DialogClose asChild>
             <button className="absolute top-2 right-2 bg-gray-900 text-gray-50 rounded-full p-2">
               <span className="sr-only">Close</span>
