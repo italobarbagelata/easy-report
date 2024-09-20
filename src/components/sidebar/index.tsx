@@ -1,101 +1,117 @@
-'use client';
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import React from 'react'
+"use client";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { ModeToggle } from "../global/mode-toggle";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { menuOptions } from '@/lib/constant'
-import clsx from 'clsx'
-import { Separator } from '@/components/ui/separator'
-import { Database, GitBranch, LucideMousePointerClick } from 'lucide-react'
-import { ModeToggle } from '../global/mode-toggle'
+  BarChartIcon,
+  SettingsIcon,
+  HelpCircleIcon,
+  LogOutIcon,
+  LayersIcon,
+  FileTextIcon,
+} from "lucide-react";
+import { useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { useDispatch } from "react-redux";
+import { supabase } from "@/supabase/client";
 
-type Props = {}
-
-const MenuOptions = (props: Props) => {
-  const pathName = usePathname()
+const MenuOptions = () => {
+  const pathName = usePathname();
+  const router = useRouter();
+  const user = useSelector((state: RootState) => state.user.users);
 
   return (
-    <nav className="hidden md:block dark:bg-black h-screen overflow-scroll  justify-between flex items-center flex-col  gap-10 py-6 px-2">
-      <div className="flex items-center justify-center flex-col gap-8">
-        <Link
-          className="flex font-bold flex-row "
-          href="/"
+    <div className="flex h-screen w-64 flex-col border-r bg-background">
+      <div className="flex h-[65px] items-center border-b">
+        <img src="/logo.png" alt="logo" className="h-10 w-18 ml-4 mr-6" />
+      </div>
+      <ScrollArea className="flex-1">
+        <nav className="flex flex-col gap-2 p-4">
+          <div>
+            <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+              Overview
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant={pathName === "/dashboard" ? "secondary" : "ghost"}
+                className="w-full justify-start gap-2"
+                onClick={() => router.push("/dashboard")}
+              >
+                <BarChartIcon className="h-4 w-4" />
+                Analytics
+              </Button>
+            </div>
+          </div>
+          <Separator className="my-2" />
+          <div>
+            <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+              Inspection
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant={pathName === "/inspection" ? "secondary" : "ghost"}
+                className="w-full justify-start gap-2"
+                onClick={() => router.push("/inspection")}
+              >
+                <LayersIcon className="h-4 w-4" />
+                All
+              </Button>
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <FileTextIcon className="h-4 w-4" />
+                Today
+              </Button>
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <FileTextIcon className="h-4 w-4" />
+                Last 7 days
+              </Button>
+            </div>
+          </div>
+          <Separator className="my-2" />
+          <div>
+            <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+              Settings
+            </h2>
+            <div className="space-y-1">
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <SettingsIcon className="h-4 w-4" />
+                General
+              </Button>
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <HelpCircleIcon className="h-4 w-4" />
+                Help & Support
+              </Button>
+            </div>
+          </div>
+        </nav>
+      </ScrollArea>
+      <Separator />
+      <div className="p-4">
+        <div className="flex items-center gap-4 justify-between">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {user.email?.split("@")[0]}
+            </span>
+            <span className="text-xs text-muted-foreground">{user?.email}</span>
+          </div>
+          <ModeToggle />
+        </div>
+        <Button
+          variant="ghost"
+          className="mt-4 w-full justify-start gap-2"
+          onClick={() => {
+            supabase.auth.signOut();
+            router.push("/login");
+          }}
         >
-          Kingo
-        </Link>
-        <TooltipProvider>
-          {menuOptions.map((menuItem) => (
-            <ul key={menuItem.name}>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger>
-                  <li>
-                    <Link
-                      href={menuItem.href}
-                      className={clsx(
-                        'group h-8 w-8 flex items-center justify-center  scale-[1.5] rounded-lg p-[3px]  cursor-pointer',
-                        {
-                          'dark:bg-[#2F006B] bg-[#EEE0FF] ':
-                            pathName === menuItem.href,
-                        }
-                      )}
-                    >
-                      <menuItem.Component
-                        selected={pathName === menuItem.href}
-                      />
-                    </Link>
-                  </li>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  className="bg-black/10 backdrop-blur-xl"
-                >
-                  <p>{menuItem.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </ul>
-          ))}
-        </TooltipProvider>
-        <Separator />
-        {/* <div className="flex items-center flex-col gap-9 dark:bg-[#353346]/30 py-4 px-2 rounded-full h-56 overflow-scroll border-[1px]">
-          <div className="relative dark:bg-[#353346]/70 p-2 rounded-full dark:border-t-[2px] border-[1px] dark:border-t-[#353346]">
-            <LucideMousePointerClick
-              className="dark:text-white"
-              size={18}
-            />
-            <div className="border-l-2 border-muted-foreground/50 h-6 absolute left-1/2 transform translate-x-[-50%] -bottom-[30px]" />
-          </div>
-          <div className="relative dark:bg-[#353346]/70 p-2 rounded-full dark:border-t-[2px] border-[1px] dark:border-t-[#353346]">
-            <GitBranch
-              className="text-muted-foreground"
-              size={18}
-            />
-            <div className="border-l-2 border-muted-foreground/50 h-6 absolute left-1/2 transform translate-x-[-50%] -bottom-[30px]"></div>
-          </div>
-          <div className="relative dark:bg-[#353346]/70 p-2 rounded-full dark:border-t-[2px] border-[1px] dark:border-t-[#353346]">
-            <Database
-              className="text-muted-foreground"
-              size={18}
-            />
-            <div className="border-l-2 border-muted-foreground/50 h-6 absolute left-1/2 transform translate-x-[-50%] -bottom-[30px]"></div>
-          </div>
-          <div className="relative dark:bg-[#353346]/70 p-2 rounded-full dark:border-t-[2px] border-[1px] dark:border-t-[#353346]">
-            <GitBranch
-              className="text-muted-foreground"
-              size={18}
-            />
-          </div>
-        </div> */}
+          <LogOutIcon className="h-4 w-4" />
+          Log out
+        </Button>
       </div>
-      <div className="flex items-center justify-center flex-col gap-8">
-        <ModeToggle />
-      </div>
-    </nav>
-  )
-}
+    </div>
+  );
+};
 
-export default MenuOptions
+export default MenuOptions;

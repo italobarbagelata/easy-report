@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Car, Save } from "lucide-react";
+import {
+  CalendarIcon,
+  CircleCheckBig,
+  FileText,
+  Save,
+  Send,
+} from "lucide-react";
 
 import {
   Popover,
@@ -26,9 +31,6 @@ import PhotoGallery from "@/components/PhotoGallery";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/supabase/client";
-import QualityCardContainer from "@/components/app/quality-card-container";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -37,14 +39,27 @@ import {
   updateInspection,
   updateInspectionSuccess,
 } from "@/store/inspection/actions";
-import { Inspection, InspectionElement } from "@/interfaces/inspection";
 import {
   fetchQualityCommentsById,
   saveQualityComments,
   updateQualityCommentsById,
 } from "@/store/quality/actions";
-import { fetchUsers } from "@/store/user/actions";
 import { jsPDF } from "jspdf";
+import { InspectionElement } from "@/interfaces/inspection";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   params: {
@@ -52,7 +67,7 @@ interface Props {
   };
 }
 
-const DashboardPage = ({ params }: Props) => {
+const InspectionIdPage = ({ params }: Props) => {
   const inspection_id = params.inspection_id;
   const dispatch: AppDispatch = useDispatch();
 
@@ -82,6 +97,8 @@ const DashboardPage = ({ params }: Props) => {
     (state: RootState) => state.quailty.quality_comments
   );
 
+  const photos = useSelector((state: RootState) => state.photos.photos);
+
   const user = useSelector((state: RootState) => state.user.users);
 
   const [pdfUrl, setPdfUrl] = useState("");
@@ -89,7 +106,6 @@ const DashboardPage = ({ params }: Props) => {
   useEffect(() => {
     dispatch(fetchInspection(inspection_id));
     dispatch(fetchQualityCommentsById(inspection_id));
-    dispatch(fetchUsers());
   }, [inspection_id]);
 
   useEffect(() => {
@@ -350,7 +366,7 @@ const DashboardPage = ({ params }: Props) => {
   };
 
   const handleSubmit = () => {
-    if (inspection) {
+    if (inspection.id !== undefined) {
       dispatch(updateInspection(inspection_id, inspection));
     }
     dispatch(saveQualityComments(user.id, quality_comments));
@@ -358,458 +374,613 @@ const DashboardPage = ({ params }: Props) => {
 
   const generateJSPDF = () => {
     const doc = new jsPDF();
-    //add img jspdf
+    
+    // Add logo
     doc.addImage("../kingo_pdf.png", "PNG", 17, 3, 42, 22);
+    
     doc.setFontSize(16);
     doc.text("Inspection Quality Report", 75, 10);
+    
+    // Inspection and date section
     doc.setFontSize(12);
-    //Report date 2024-06-12 Inspected By Juan Pablo Carrasco
-    doc.text("Report date: " + date?.toLocaleDateString(), 75, 20);
+    doc.text("Inspection/Date: " + date?.toLocaleDateString(), 75, 20);
     doc.text("Inspected By: " + "italo", 125, 20);
-
+    
+    // Preliminary Info Section
     doc.setFontSize(16);
-    doc.rect(10, 28, 190, 10);
-    doc.text("Preliminary Information", 75, 35);
-
+    doc.rect(10, 28, 190, 10); // Border for the "Preliminary Information" section
+    doc.text("Logistics", 15, 35);
     doc.setFontSize(12);
-    doc.text("Exporter: ", 15, 45);
-    doc.text(inspection?.exporter?.description ?? "", 55, 45);
-    doc.text("Label: ", 15, 55);
-    doc.text(inspection?.label?.description ?? "", 55, 55);
-    doc.text("Place: ", 15, 65);
-    doc.text(inspection?.place ?? "", 55, 65);
-    doc.text("Phyto China: ", 15, 75);
-    doc.text(inspection?.phyto_china?.description ?? "", 55, 75);
-    doc.text("Dispatch: ", 15, 85);
-    doc.text(inspection?.dispatch?.description ?? "", 55, 85);
+    
+    doc.text("Shipper/Grower: ", 15, 45);
+    doc.text("Label/Brand: ", 15, 55);
+    doc.text("Packaging Format: ", 15, 65);
+    doc.text("Weight: ", 15, 75);
+    doc.text("Grown Case(s): ", 15, 85);
+    doc.text("Available Sizes: ", 15, 95);
 
+    // Product Info Section
     doc.setFontSize(16);
-    doc.rect(10, 93, 190, 10);
-    doc.text("Packaging Format", 75, 100);
-
+    doc.rect(10, 105, 190, 10);
+    doc.text("Product Info", 15, 112);
+    
     doc.setFontSize(12);
-    doc.text("Package: ", 15, 110);
-    doc.text(inspection?.package?.description ?? "", 55, 110);
-    doc.text("Weight (format): ", 15, 120);
-    doc.text(inspection?.weight?.description ?? "", 55, 120);
-
+    doc.text("Species: ", 15, 122);
+    doc.text("Variety: ", 15, 132);
+    doc.text("Packing Date: ", 15, 142);
+    
+    // Quality Comments Section
     doc.setFontSize(16);
-    doc.rect(10, 128, 190, 10);
-    doc.text("Detailed Information (Sticker)", 75, 135);
-
+    doc.rect(10, 150, 190, 10); 
+    doc.text("Quality/Condition Comments", 15, 157);
     doc.setFontSize(12);
-
-    doc.text("Species: ", 15, 145);
-    doc.text(inspection?.species?.description ?? "", 55, 145);
-    doc.text("Variety: ", 15, 155);
-    doc.text(inspection?.variety?.description ?? "", 55, 155);
-    doc.text("Grower: ", 15, 165);
-    doc.text(inspection?.grower ?? "", 55, 165);
-    doc.text("Color: ", 15, 175);
-    doc.text(inspection?.color?.description ?? "", 55, 175);
-
+    doc.text("Comments: ", 15, 170);
+    
+    // Evaluated Parameters Section
     doc.setFontSize(16);
-    doc.rect(10, 183, 190, 10);
-    doc.text("Observations", 75, 190);
-
+    doc.rect(10, 185, 90, 10); 
+    doc.text("Evaluated Parameters", 15, 192);
     doc.setFontSize(12);
-    doc.text("Condition Observations", 15, 200);
-    doc.text(inspection?.observations ?? "", 15, 210);
-    doc.text("Final Recommendations", 15, 220);
-    doc.text(inspection?.final_recomendations ?? "", 15, 230);
+    
+    doc.text("Color: ", 15, 202);
+    doc.text("Size: ", 15, 212);
+    doc.text("Brix: ", 15, 222);
+    doc.text("Flavor: ", 15, 232);
+    doc.text("Skin defects: ", 15, 242);
+    doc.text("Firmness: ", 15, 252);
+    doc.text("Decay: ", 15, 262);
 
-    //paguina nueva
+    // Final Conclusion Section
+    doc.setFontSize(16);
+    doc.rect(105, 185, 95, 10);
+    doc.text("Final Conclusion", 125, 192);
+    doc.setFontSize(12);
+    doc.text("Conclusion/Observations: ", 110, 202);
 
     doc.addPage();
 
-    doc.setFontSize(16);
-    doc.rect(10, 10, 190, 10);
-    doc.text("Quality Comments", 75, 17);
+    // Ordenar fotos según el order, dejando las de order 0 al final
+    const sortedPhotos = photos.sort(
+      (a, b) => (a.order === 0 ? 1 : a.order) - (b.order === 0 ? 1 : b.order)
+    );
 
-    doc.setFontSize(12);
+    //add photos grid 2 x 6 photos
+    let x = 10;
+    let y = 10;
+    let width = 90;
+    let height = 60;
+    let count = 0;
 
-    quality_comments.map((item, index) => {
-      doc.rect(10, 25 + index * 70, 190, 10);
-      doc.text("Quality Comment " + (index + 1), 75, 32 + index * 70);
-
-      doc.text("Color: ", 15, 42 + index * 70);
-      doc.text(item.color_description, 55, 42 + index * 70);
-      doc.text("Size: ", 15, 52 + index * 70);
-      doc.text(item.size_description, 55, 52 + index * 70);
-      doc.text("Minor: ", 15, 62 + index * 70);
-      doc.text(item.minor_description, 55, 62 + index * 70);
-      doc.text("Firmness: ", 15, 72 + index * 70);
-      doc.text(item.firmness_description, 55, 72 + index * 70);
-      doc.text("Others: ", 15, 82 + index * 70);
-      doc.text(item.others_description, 55, 82 + index * 70);
+    sortedPhotos.map((photo, index) => {
+      if (count === 8) { // Cambiar a 8 imágenes por página
+        doc.addPage(); // Agregar nueva página
+        x = 10; // Reiniciar posición x
+        y = 10; // Reiniciar posición y
+        count = 0; // Reiniciar contador
+      }
+      doc.addImage(photo.url, "PNG", x, y, width, height);
+      x += 100; // Mover posición x para la siguiente imagen
+      count++;
+      if (count % 2 === 0) { // Cambiar a nueva fila después de 2 imágenes
+        x = 10; // Reiniciar posición x
+        y += 70; // Mover posición y hacia abajo
+      }
     });
 
-    doc.output("datauristring", {
-      filename: "inspection.pdf",
-    });
-    setPdfUrl(doc.output("datauristring"));
+    // Generar el PDF como un Blob
+    const pdfBlob = doc.output("blob");
+
+    // Crear una URL para el Blob
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+    // Abrir una nueva ventana con la URL del Blob
+    window.open(pdfUrl, "_blank");
   };
 
   return (
-    <div className="flex flex-col relative  bg-muted/40 mx-auto h-full overflow-scroll">
-      <div className="flex items-center sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg border-b">
-        <div className="text-sm">Inspection date</div>
-        <Separator orientation="vertical" className="h-6 mx-2" />
-        <div className="text-sm mr-2">
-          {date &&
-            date.toLocaleDateString("es-ES", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            })}
-        </div>
+    <div className="flex flex-col relative  mx-auto h-full overflow-scroll  bg-muted/40">
+      <div className="flex items-center sticky top-0 z-[10] p-3 bg-background/50 backdrop-blur-lg border-b">
+        <div className="text-sm md:text-2xl">Inspection</div>
+        <div className="text-sm md:text-2xl mx-4"># {inspection_id}</div>
+
         <Popover>
           <PopoverTrigger asChild>
-            <CalendarIcon className="mr-2 h-4 w-4  cursor-pointer" />
+            <Button
+              variant={"outline"}
+              className={cn(
+                "px-3 text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+              disabled={inspection.status_email}
+            >
+              {date ? (
+                date.toLocaleDateString("es-ES", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+              ) : (
+                <span>Pick a date</span>
+              )}
+              <CalendarIcon className="h-4 w-4 ml-2 opacity-50" />
+            </Button>
           </PopoverTrigger>
-          <Separator orientation="vertical" className="h-6 mx-2" />
-          <PopoverContent className="w-auto p-0">
+          <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
               selected={date}
               onSelect={setDate}
               locale={es}
-              initialFocus
             />
           </PopoverContent>
         </Popover>
-        <div className="text-sm">N°</div>
-        <Separator orientation="vertical" className="h-6 mx-2" />
-        <div className="text-sm">#{inspection_id}</div>
-        <Button
-          variant="outline"
-          size="lg"
-          className="ml-auto"
-          onClick={handleSubmit}
-          aria-label="Save"
-        >
-          <Save className="h-6 w-6 mr-2" />
-          <div className="text-xl hidden md:block">Save</div>
-        </Button>
-        <Button onClick={generateJSPDF}>Generar PDF</Button>
-      </div>
-      <div className="flex flex-row m-4 gap-4  w-1/2 mx-auto">
-        <div className="flex flex-col flex-1 gap-4">
-        <div className="flex flex-row flex-1 gap-4">
-          <Card>
-            <CardContent>
-              <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-row gap-4 items-center">
-                  <div className="text-md">Inspection date</div>
-                  <Separator orientation="vertical" className="h-6 mx-2" />
-                  <div className="text-md mr-2">
-                    {date &&
-                      date.toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                  </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <CalendarIcon className="mr-2 h-4 w-4  cursor-pointer" />
-                    </PopoverTrigger>
-                    <Separator orientation="vertical" className="h-6 mx-2" />
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        locale={es}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <div className="text-md">N°</div>
-                  <Separator orientation="vertical" className="h-6 mx-2" />
-                  <div className="text-md">#{inspection_id}</div>
-                </div>
-                <div className="flex flex-row gap-4">
-                  <div className="flex flex-col flex-1 gap-1">
-                    <div className="text-md text-primary"> Grower</div>
-                    <Input
-                      placeholder="Grower"
-                      onChange={(e) => handleChange("grower", e.target.value)}
-                      value={inspection?.grower ?? ""}
-                    />
-                  </div>
-                  <Separator orientation="vertical" className="h-22 mx-2" />
-                  <div className="flex flex-col flex-1 gap-1">
-                    <div className="text-md text-primary"> Package</div>
-                    <Select
-                      onValueChange={(value) => handleChange("package", value)}
-                      value={inspection?.package?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select package" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {packageKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary">Label</div>
-                    <Select
-                      onValueChange={(value) => handleChange("label", value)}
-                      value={inspection?.label?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select label" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {labelKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Weight</div>
-                    <Select
-                      onValueChange={(value) => handleChange("weight", value)}
-                      value={inspection?.weight?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select weight" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {weightKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Grower</div>
-                    <Input
-                      placeholder="Grower"
-                      onChange={(e) => handleChange("grower", e.target.value)}
-                      value={inspection?.grower ?? ""}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Dispatch</div>
-                    <Select
-                      onValueChange={(value) => handleChange("dispatch", value)}
-                      value={inspection?.dispatch?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select dispatch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dispatchKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <div className="flex flex-col gap-4 p-4">
-          
-  
-                <div className="flex flex-col gap-4">
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary">Label</div>
-                    <Select
-                      onValueChange={(value) => handleChange("label", value)}
-                      value={inspection?.label?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select label" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {labelKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Weight</div>
-                    <Select
-                      onValueChange={(value) => handleChange("weight", value)}
-                      value={inspection?.weight?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select weight" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {weightKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Grower</div>
-                    <Input
-                      placeholder="Grower"
-                      onChange={(e) => handleChange("grower", e.target.value)}
-                      value={inspection?.grower ?? ""}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 items-center">
-                    <div className="text-md text-primary"> Dispatch</div>
-                    <Select
-                      onValueChange={(value) => handleChange("dispatch", value)}
-                      value={inspection?.dispatch?.id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select dispatch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dispatchKingo.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.description}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          </div>
-          <Card>
-            <CardContent>
-              <div className="flex flex-col gap-4 p-4">
-                <div className="flex flex-col gap-1">
-                  <div className="text-md text-primary pb-2">
-                    Quality conditions coments
-                  </div>
-                  <Textarea
-                    placeholder="Observations"
-                    className="h-32"
-                    onChange={(e) =>
-                      handleChange("observations", e.target.value)
-                    }
-                    value={inspection?.observations ?? ""}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <div className="flex flex-col gap-4 p-4">
-                <div className="text-md text-primary pb-2">
-                  Evaluated parameters
-                </div>
-                <div className="grid grid-row-2 gap-4">
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Color</div>
-                    <Input
-                      placeholder="Color"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                      value={inspection?.color?.description ?? ""}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Size</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Brix</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Flavor</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Skin defects</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Firmness</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="text-md text-primary pb-2">Decay</div>
-                    <Input
-                      placeholder="Size"
-                      onChange={(e) => handleChange("size", e.target.value)}
-                    />
-                    <Input
-                      placeholder="%"
-                      onChange={(e) => handleChange("color", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
+        <div className="flex flex-row gap-4 ml-4 items-center">
+          <Button
+            variant="secondary"
+            className="ml-auto"
+            onClick={handleSubmit}
+            aria-label="Save"
+            disabled={inspection.status_email}
+          >
+            <Save className="h-6 w-6 mr-2" />
+            <span>Save</span>
+          </Button>
+          <Button onClick={generateJSPDF}>
+            <FileText className="h-6 w-6 mr-2" />
+            <span>Preview PDF</span>
+          </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger>
+              {" "}
+              <Button
+                variant="outline"
+                onClick={() => console.log(inspection)}
+                disabled={inspection.status_email}
+              >
+                {inspection.status_email ? (
+                  <CircleCheckBig className="h-6 w-6 mr-2" />
+                ) : (
+                  <Send className="h-6 w-6 mr-2" />
+                )}
+                {inspection.status_email
+                  ? "Inspection sent"
+                  : "Send inspection"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. Send email to the customer with
+                  the inspection report.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Badge variant={inspection.status_email ? "default" : "destructive"}>
+            {inspection.status_email ? "Sender" : "Not Sender"}
+          </Badge>
         </div>
+      </div>
+      <div className="flex flex-row m-4 gap-4 w-8/12">
+        <Tabs defaultValue="inspection" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="inspection">Inspection</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
+          </TabsList>
+          <TabsContent value="inspection">
+            <div className="flex flex-col flex-1 gap-2">
+              <div className="flex flex-row flex-1 gap-2">
+                <Card className="w-full">
+                  <div className="flex flex-col gap-4 p-4">
+                    <div className="grid grid-rows-6 items-center gap-4">
+                      <div className="grid grid-cols-2 items-center">
+                        <p className="text-sm">Grower</p>
+                        <Input
+                          placeholder="Grower"
+                          onChange={(e) =>
+                            handleChange("grower", e.target.value)
+                          }
+                          value={inspection?.grower ?? ""}
+                          disabled={inspection.status_email}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 items-center">
+                        <p className="text-sm">Package</p>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("package", value)
+                          }
+                          value={inspection?.package?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select package" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {packageKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 items-center">
+                        <div className="text-sm">Label</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("label", value)
+                          }
+                          value={inspection?.label?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select label" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {labelKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 items-center">
+                        <div className="text-sm"> Weight</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("weight", value)
+                          }
+                          value={inspection?.weight?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select weight" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {weightKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2  items-center">
+                        <div className="text-sm"> Grower</div>
+                        <Input
+                          placeholder="Grower"
+                          onChange={(e) =>
+                            handleChange("grower", e.target.value)
+                          }
+                          value={inspection?.grower ?? ""}
+                          disabled={inspection.status_email}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 items-center">
+                        <div className="text-sm"> Dispatch</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("dispatch", value)
+                          }
+                          value={inspection?.dispatch?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select dispatch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dispatchKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="w-full">
+                  <div className="flex flex-col gap-4 p-4">
+                    <div className="grid grid-rows-6 items-center gap-4">
+                      <div className="grid grid-cols-2 gap-2 items-center">
+                        <div className="text-sm">Label</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("label", value)
+                          }
+                          value={inspection?.label?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select label" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {labelKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 items-center">
+                        <div className="text-sm"> Weight</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("weight", value)
+                          }
+                          value={inspection?.weight?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select weight" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {weightKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 items-center">
+                        <div className="text-sm"> Grower</div>
+                        <Input
+                          placeholder="Grower"
+                          onChange={(e) =>
+                            handleChange("grower", e.target.value)
+                          }
+                          value={inspection?.grower ?? ""}
+                          disabled={inspection.status_email}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 items-center">
+                        <div className="text-sm"> Dispatch</div>
+                        <Select
+                          onValueChange={(value) =>
+                            handleChange("dispatch", value)
+                          }
+                          value={inspection?.dispatch?.id}
+                          disabled={inspection.status_email}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select dispatch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dispatchKingo.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+              <Card>
+                <div className="flex flex-col gap-4 p-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="text-sm pb-2">
+                      Quality conditions coments
+                    </div>
+                    <Textarea
+                      placeholder="Observations"
+                      className="h-32"
+                      onChange={(e) =>
+                        handleChange("observations", e.target.value)
+                      }
+                      value={inspection?.observations ?? ""}
+                      disabled={inspection.status_email}
+                    />
+                  </div>
+                </div>
+              </Card>
+              <div className="flex flex-row flex-1 gap-2">
+                <div className="flex flex-col flex-1 gap-2">
+                  <Card>
+                    <div className="flex flex-col gap-4 p-4">
+                      <div className="text-md text-primary pb-2">
+                        Evaluated parameters
+                      </div>
+                      <div className="grid grid-row-2 gap-4">
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">Color</div>
+                          <Input
+                            placeholder="Color"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            value={inspection?.color?.description ?? ""}
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">Size</div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">Brix</div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">
+                            Flavor
+                          </div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">
+                            Skin defects
+                          </div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">
+                            Firmness
+                          </div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 items-center">
+                          <div className="text-md text-primary pb-2">Decay</div>
+                          <Input
+                            placeholder="Size"
+                            onChange={(e) =>
+                              handleChange("size", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                          <Input
+                            placeholder="%"
+                            onChange={(e) =>
+                              handleChange("color", e.target.value)
+                            }
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+                <div className="flex flex-col flex-1 gap-2">
+                  <Card>
+                    <CardContent>
+                      <div className="flex flex-col gap-4 p-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-md text-primary pb-2">
+                            Final Recomendations
+                          </div>
+                          <Textarea
+                            placeholder="Final Recomendations"
+                            className="h-32"
+                            onChange={(e) =>
+                              handleChange("observations", e.target.value)
+                            }
+                            value={inspection?.observations ?? ""}
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent>
+                      <div className="flex flex-col gap-4 p-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="text-md text-primary pb-2">
+                            Quality conditions coments
+                          </div>
+                          <Textarea
+                            placeholder="Observations"
+                            className="h-32"
+                            onChange={(e) =>
+                              handleChange("observations", e.target.value)
+                            }
+                            value={inspection?.observations ?? ""}
+                            disabled={inspection.status_email}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="photos">
+            <PhotoGallery
+              inspection_id={inspection_id}
+              disabled={inspection.status_email || false}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 };
 
-export default DashboardPage;
+export default InspectionIdPage;

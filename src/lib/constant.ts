@@ -95,11 +95,6 @@ export const products = [
 export const menuOptions = [
   { name: 'Inspection', Component: Home, href: '/inspection' },
   { name: 'Data', Component: Category, href: '/data' },
-  { name: 'Inspections', Component: Workflows, href: '/workflows' },
-  { name: 'Settings', Component: Settings, href: '/settings' },
-  { name: 'Billing', Component: Payment, href: '/billing' },
-  { name: 'Templates', Component: Templates, href: '/templates' },
-  { name: 'Logs', Component: Logs, href: '/logs' },
 ]
 
 export const EditorCanvasDefaultCardTypes = {

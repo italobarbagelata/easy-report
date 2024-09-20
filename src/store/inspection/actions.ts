@@ -1,94 +1,86 @@
-import { Inspection } from "@/interfaces/inspection";
 import { supabase } from "@/supabase/client";
 import { Dispatch } from "redux";
 
-export const fetchInspections = () => {
+interface Inspection {
+  id: number;
+  observations?: string;
+  status_email?: string;
+  place: string;
+  grower: string;
+  final_recomendations: string;
+  extra_details: string;
+  color: NestedItem;
+  dispatch: NestedItem;
+  exporter: NestedItem;
+  label: NestedItem;
+  package: NestedItem;
+  phyto_china: NestedItem;
+  sizes?: NestedItem;
+  weight: NestedItem;
+  final_overall: NestedItem;
+}
+
+interface NestedItem {
+  id: number;
+  description: string;
+}
+
+export const fetchInspections = (userId: string) => {
   return async (dispatch: Dispatch) => {
     try {
-      const { data, error } = await supabase.from("inspection").select(`
+      const { data, error } = await supabase.from('inspection').select(`
         id,
         observations,
+        inspection_date,
         status_email,
         place,
         grower,
         final_recomendations,
         extra_details,
-        color:id_color (
-          description
-        ),
-        dispatch:id_dispatch (
-          description
-        ),
-        exporter:id_exporter (
-          description
-        ),
-        label:id_label (
-          description
-        ),
-        package:id_package (
-          description
-        ),
-        phyto_china:id_phyto_china (
-          description
-        ),
-        sizes:id_sizes (
-          description
-        ),
-        weight:id_weight (
-          description
-        ),
-        final_overall:id_final_overall (
-          description
-        )
-      `);
+        color:id_color (id, description),
+        dispatch:id_dispatch (id, description),
+        exporter:id_exporter (id, description),
+        label:id_label (id, description),
+        package:id_package (id, description),
+        phyto_china:id_phyto_china (id, description),
+        sizes:id_sizes (id, description),
+        weight:id_weight (id, description),
+        final_overall:id_final_overall (id, description),
+        images:images (id)
+      `)
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
+
       if (error) {
         throw error;
       }
-      const inspections = data.map((item: any) => ({
+      
+      const mapNestedItem = (item: any): NestedItem => ({
+        id: item?.id,
+        description: item?.description,
+      });
+
+      const inspections: Inspection[] = data.map((item: any) => ({
         id: item.id,
-        observations: item.observations,
-        status_email: item.status_email,
+        observations: item?.observations,
+        status_email: item?.status_email,
+        date: item?.inspection_date,
         place: item.place,
         grower: item.grower,
         final_recomendations: item.final_recomendations,
         extra_details: item.extra_details,
-        color: item.color.map((color: any) => ({
-          id: color.id,
-          description: color.description,
-        })),
-        dispatch: item.dispatch.map((dispatch: any) => ({
-          id: dispatch.id,
-          description: dispatch.description,
-        })),
-        exporter: item.exporter.map((exporter: any) => ({
-          id: exporter.id,
-          description: exporter.description,
-        })),
-        label: item.label.map((label: any) => ({
-          id: label.id,
-          description: label.description,
-        })),
-        package: item.package.map((package_kingo: any) => ({
-          id: package_kingo.id,
-          description: package_kingo.description,
-        })),
-        phyto_china: item.phyto_china.map((phyto_china: any) => ({
-          id: phyto_china.id,
-          description: phyto_china.description,
-        })),
-        sizes: item.sizes.map((sizes: any) => ({
-          id: sizes.id,
-          description: sizes.description,
-        })),
-        weight: item.weight.map((weight: any) => ({
-          id: weight.id,
-          description: weight.description,
-        })),
-        final_overall: item.final_overall.map((final_overall: any) => ({
-          id: final_overall.id,
-          description: final_overall.description,
-        })),
+        color: mapNestedItem(item.color),
+        dispatch: mapNestedItem(item.dispatch),
+        exporter: mapNestedItem(item.exporter),
+        label: mapNestedItem(item.label),
+        package: mapNestedItem(item.package),
+        phyto_china: mapNestedItem(item.phyto_china),
+        sizes: item.sizes ? mapNestedItem(item.sizes) : undefined,
+        weight: mapNestedItem(item.weight),
+        final_overall: mapNestedItem(item.final_overall),
+        images: item.images.length
       }));
+
       dispatch(fetchInspectionsSuccess(inspections));
     } catch (error) {
       dispatch(fetchInspectionsFailure(error));
@@ -99,12 +91,16 @@ export const fetchInspections = () => {
 export const createInspection = (id: string) => {
   return async (dispatch: Dispatch) => {
     try {
-      const { data, error } = await supabase.from("inspection").insert([
-        {
-          user_id: id,
-          status_email: false,
-        },
-      ]).select("id").single();
+      const { data, error } = await supabase
+        .from("inspection")
+        .insert([
+          {
+            user_id: id,
+            status_email: false,
+          },
+        ])
+        .select("id")
+        .single();
 
       if (error) {
         throw error;
@@ -126,7 +122,8 @@ export const updateInspection = (id: Number, inspection: Inspection) => {
         .update({
           id_exporter: inspection?.exporter?.id || inspection?.exporter,
           id_label: inspection?.label?.id || inspection?.label,
-          id_phyto_china: inspection?.phyto_china?.id || inspection?.phyto_china,
+          id_phyto_china:
+            inspection?.phyto_china?.id || inspection?.phyto_china,
           id_dispatch: inspection?.dispatch?.id || inspection?.dispatch,
           id_package: inspection?.package?.id || inspection?.package,
           id_weight: inspection?.weight?.id || inspection?.weight,
@@ -138,10 +135,10 @@ export const updateInspection = (id: Number, inspection: Inspection) => {
           grower: inspection?.grower,
           final_recomendations: inspection?.final_recomendations,
           extra_details: inspection?.extra_details,
-          id_final_overall: inspection?.final_overall?.id || inspection?.final_overall,
+          id_final_overall:
+            inspection?.final_overall?.id || inspection?.final_overall,
         })
-        .eq("id", id)
-        .select(`
+        .eq("id", id).select(`
         id,
         observations,
         status_email,
@@ -190,7 +187,7 @@ export const updateInspection = (id: Number, inspection: Inspection) => {
         throw error;
       }
       console.log(data);
-      dispatch(updateInspectionSuccess(data as Inspection));
+      dispatch(updateInspectionSuccess(data[0]));
     } catch (error) {
       dispatch(fetchInspectionsFailure(error));
     }
@@ -296,3 +293,6 @@ export const updateInspectionSuccess = (inspection: Inspection) => {
     payload: inspection,
   };
 };
+
+
+

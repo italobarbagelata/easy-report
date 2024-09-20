@@ -20,6 +20,7 @@ export interface Inspection {
   status_email?: boolean;
   extra_details?: string;
   qualityComments?: QualityComments[];
+  images?: number;
 }
 
 export interface QualityComments {
@@ -40,4 +41,9 @@ export interface QualityComments {
 export interface InspectionElement {
   id: string;
   description: string;
+}
+
+export interface Photo {
+  url: string;
+  order: number;
 }
