@@ -5,18 +5,14 @@ import { supabase } from "@/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import Link from "next/link";
 import {
-  CircleX,
   EyeIcon,
   ListOrdered,
   Loader,
-  ShieldCloseIcon,
   TrashIcon,
   UploadIcon,
   X,
 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "./ui/progress";
 import imageCompression from "browser-image-compression";
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from "./ui/dialog";
