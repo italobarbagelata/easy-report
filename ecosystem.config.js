@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: "easy-report",
-    script: "npm run start",
+    script: "npm run build && npm run start",
     env: {
       NODE_ENV: "production", // Asegúrate de que esté establecido en "production"
       NEXT_PUBLIC_SUPABASE_URL: "https://ofhsozrjmzxtsbfoczsf.supabase.co",
