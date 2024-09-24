@@ -469,7 +469,7 @@ const InspectionIdPage = ({ params }: Props) => {
 
   const handleSubmit = () => {
     if (inspection.id !== undefined) {
-      //dispatch(updateInspection(inspection_id, inspection));
+      dispatch(updateInspection(inspection_id, inspection));
       dispatch(savePhotoOrder(inspection_id, photos));
     }
   };
