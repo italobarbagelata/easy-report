@@ -10,8 +10,8 @@ interface Bar7DaysProps {
 const Bar7Days = ({ inspections }: Bar7DaysProps) => {
   const filteredInspections = inspections.filter((inspection) => {
     console.log(inspection);
-    if (!inspection.date) return false; // Check for undefined date
-    const inspectionDate = new Date(inspection.date);
+    if (!inspection.inspection_date) return false; // Check for undefined date
+    const inspectionDate = new Date(inspection.inspection_date);
     const today = new Date();
     const last7Days = new Date(today.setDate(today.getDate() - 7));
     return inspectionDate >= last7Days;
@@ -27,7 +27,8 @@ const Bar7Days = ({ inspections }: Bar7DaysProps) => {
   const completeInspectionCounts = inspectionDates.map((date) => {
     const count = filteredInspections.filter(
       (ins) =>
-        ins.date && new Date(ins.date).toISOString().split("T")[0] === date // Check if ins.date is defined
+        ins.inspection_date &&
+        new Date(ins.inspection_date).toISOString().split("T")[0] === date // Check if ins.date is defined
     ).length; // Contar todas las inspecciones para esa fecha
     return count; // Retornar el conteo
   });
