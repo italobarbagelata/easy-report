@@ -9,6 +9,7 @@ import {
   EyeIcon,
   ListOrdered,
   Loader,
+  Trash2,
   TrashIcon,
   UploadIcon,
   X,
@@ -195,21 +196,45 @@ export default function PhotoGallery({ inspection_id, disabled }: Props) {
   }
 
   function handlePhotoClick(photo: string) {
-    if (!isOrdering) return;
+    if (!isOrdering) {
+      return;
+    }
 
     setOrderedPhotos((prev) => {
-      const currentOrder = prev[photo];
-      const newOrder = currentOrder ? undefined : orderCounter;
+      const newOrderedPhotos = { ...prev };
 
-      // Ensure newOrder is always a number
-      const finalOrder = newOrder ?? 0; // Default to 0 if newOrder is undefined
+      if (newOrderedPhotos[photo]) {
+        // Si la foto ya tiene un orden, lo eliminamos
+        delete newOrderedPhotos[photo];
+      } else {
+        // Si la foto no tiene orden, le asignamos el siguiente número disponible
+        const nextOrder = Math.max(0, ...Object.values(newOrderedPhotos)) + 1;
+        newOrderedPhotos[photo] = nextOrder;
+      }
 
-      dispatch(updatePhotoOrder({ url: photo, order: finalOrder }, finalOrder));
+      // Reordenamos para asegurar que no haya huecos
+      const sortedEntries = Object.entries(newOrderedPhotos).sort(
+        (a, b) => a[1] - b[1]
+      );
+      const reorderedPhotos = Object.fromEntries(
+        sortedEntries.map(([url, _], index) => [url, index + 1])
+      );
 
-      return {
-        ...prev,
-        [photo]: finalOrder, // Use finalOrder here
-      };
+      // Actualizamos el estado global para cada foto
+      Object.entries(reorderedPhotos).forEach(([url, order]) => {
+        dispatch(updatePhotoOrder({ url, order }, order));
+      });
+
+      return reorderedPhotos;
+    });
+  }
+
+  function clearOrder() {
+    setOrderedPhotos({});
+    setOrderCounter(1);
+    // Update the global state to clear order for all photos
+    photos.forEach((photo) => {
+      dispatch(updatePhotoOrder({ url: photo.url, order: 0 }, 0));
     });
   }
 
@@ -250,6 +275,15 @@ export default function PhotoGallery({ inspection_id, disabled }: Props) {
               >
                 <ListOrdered className="w-4 h-4 mr-2" />
                 {isOrdering ? "Disable Ordering" : "Enable Ordering"}
+              </Button>
+              <Button
+                className="cursor-pointer"
+                onClick={clearOrder}
+                variant="destructive"
+                disabled={disabled || !isOrdering}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Order
               </Button>
             </div>
             {uploading && <Progress className="mt-8" value={progress} />}

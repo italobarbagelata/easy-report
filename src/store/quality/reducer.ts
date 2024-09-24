@@ -1,5 +1,4 @@
 import { QualityComments } from "@/interfaces/inspection";
-import { ca } from "date-fns/locale";
 import { Action } from "redux";
 
 interface QualityState {
@@ -9,22 +8,7 @@ interface QualityState {
 }
 
 const initialState: QualityState = {
-  quality_comments: [
-    {
-      id: 1,
-      color: "",
-      color_description: "",
-      size: "",
-      size_description: "",
-      minor: "",
-      minor_description: "",
-      firmness: "",
-      firmness_description: "",
-      others: "",
-      others_description: "",
-      id_inspection: 0,
-    },
-  ],
+  quality_comments: [],
   loading: false,
   error: null,
 };

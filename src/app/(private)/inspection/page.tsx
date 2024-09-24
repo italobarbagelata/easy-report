@@ -149,6 +149,18 @@ const InspectionPage = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {inspections.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">
+                  <div className="flex flex-col items-center justify-center"> 
+                    <div className="text-xl font-bold">No inspections found</div>
+                    <div className="text-sm text-muted-foreground">
+                      Click the button above to add a new inspection
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
